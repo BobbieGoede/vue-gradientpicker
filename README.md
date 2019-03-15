@@ -52,11 +52,6 @@ export default {
 }
 </script>
 ```
-
-You can set the initial colors using the gradient property. Changes to the selectionColor property are applied to the current selected gradient node.
-
-The selectionChange event emits an object {color, element, index}.
-
 ## Properties
 
 <table>
@@ -146,6 +141,5 @@ For example;
 Gradient property is a string containing each color with their position percentage, intended for css gradients.
 
 Colors property is an array with NodeObjects, containing each color as an hsl object and their position (0...1)</td>
-
 </tr>
 </table>
