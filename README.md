@@ -2,12 +2,12 @@
 ![@goede/vue-gradientpicker cover image](https://gradientpicker.goede.site/gradient-picker-cover.png)
 [![npm version](https://img.shields.io/npm/v/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
 [![npm version](https://img.shields.io/npm/dt/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
-## [Live demo](https://gradientpicker.goede.site/ "Live demo")
+### [Live demo](https://gradientpicker.goede.site/ "Live demo")
 
 	
 A simple & intuitive gradient picker made with Vue.js. Tap on the gradient to add a new node, drag a node to change its position or to remove it from the gradient.
 
-## Install & import
+### Install & import
 
 Start by installing @goede/vue-gradientpicker using npm:
 
@@ -55,7 +55,7 @@ export default {
 }
 </script>
 ```
-## Properties
+### Properties
 
 <table>
 <tr>
@@ -116,7 +116,7 @@ For example;
 </tr>
 </table>
 
-## Events
+### Events
 
 <table>
 <tr>
