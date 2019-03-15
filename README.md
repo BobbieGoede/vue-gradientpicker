@@ -148,11 +148,4 @@ Gradient property is a string containing each color with their position percenta
 Colors property is an array with NodeObjects, containing each color as an hsl object and their position (0...1)</td>
 
 </tr>
-<tr>
-<td>removeOffset</td>
-	<td><pre class="javascript">Number</pre></td>
-	<td><pre class="javascript">5</pre></td>
-	<td>Determines the vertical drag distance required to remove a selected node.
-(distance to remove = pickerHeight * removeOffset)</td>
-</tr>
 </table>
