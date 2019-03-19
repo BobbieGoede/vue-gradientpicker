@@ -1,28 +1,28 @@
 <template>
 	<div
-		class='gradient-picker'
-		:class='`${classPrefix}-gradient-picker`'
-		ref='slider'
-		:style='{ background: pickerBackground }'
-		@mousedown.prevent='addAtClick'
-		@touchstart.prevent='addAtClick'
+		class="gradient-picker"
+		:class="`${classPrefix}-gradient-picker`"
+		ref="slider"
+		:style="{ background: pickerBackground }"
+		@mousedown.prevent="addAtClick"
+		@touchstart.prevent="addAtClick"
 	>
 		<div
-			v-for='(val, i) in data'
-			:key='i'
-			class='handle-container'
-			:class='[`${classPrefix}-handle-container`, containerClass(i)]'
-			:style='{ left: `${percentage(val.position)}%` }'
-			@mousedown.prevent.stop='select(i)'
-			@touchstart.prevent.stop='select(i)'
-			@mouseover='hover(i)'
-			@mouseleave='unhover()'
+			v-for="(val, i) in data"
+			:key="i"
+			class="handle-container"
+			:class="[`${classPrefix}-handle-container`, containerClass(i)]"
+			:style="{ left: `${percentage(val.position)}%` }"
+			@mousedown.prevent.stop="select(i)"
+			@touchstart.prevent.stop="select(i)"
+			@mouseover="hover(i)"
+			@mouseleave="unhover()"
 		>
 			<div
-				v-show='data[i].position >= 0'
-				class='handle'
-				:class='[`${classPrefix}-handle`, knobClass(i)]'
-				:style='{backgroundColor: data[i].color}'
+				v-show="data[i].position >= 0"
+				class="handle"
+				:class="[`${classPrefix}-handle`, knobClass(i)]"
+				:style="{backgroundColor: data[i].color}"
 			></div>
 		</div>
 	</div>
@@ -78,25 +78,7 @@ export default {
 		};
 	},
 	created() {
-		let count = this.gradient.length - 1;
-		if (typeof this.gradient[0] === "object") {
-			if (this.gradient[0].position === undefined) {
-				this.data = this.gradient.map((val, i) => ({
-					color: d3.hsl(val.color),
-					position: i / count
-				}));
-			} else {
-				this.data = this.gradient.map(val => ({
-					color: d3.hsl(val.color),
-					position: val.position
-				}));
-			}
-		} else if (typeof this.gradient[0] === "string") {
-			this.data = this.gradient.map((val, i) => ({
-				color: d3.hsl(val),
-				position: i / count
-			}));
-		}
+		this.setData(this.gradient);
 	},
 	mounted() {
 		window.addEventListener("mouseup", this.stopDrag);
@@ -147,23 +129,43 @@ export default {
 				}
 			}
 		},
-		data: {
-			handler() {
-				let copy = this.data
-					.concat()
-					.sort((a, b) => (a.position > b.position ? 1 : -1));
-				this.$emit("gradientChange", {
-					gradient: this.colorGradient,
-					colors: copy
-				});
+		gradient: {
+			handler(newVal) {
+				this.setData(newVal);
 			},
 			deep: true
 		}
 	},
-
 	methods: {
+		setData(gradient) {
+			let count = gradient.length - 1;
+			if (typeof gradient[0] === "object") {
+				if (gradient[0].position === undefined) {
+					this.data = gradient.map((val, i) => ({
+						color: d3.hsl(val.color),
+						position: i / count
+					}));
+				} else {
+					this.data = gradient.map(val => ({
+						color: d3.hsl(val.color),
+						position: val.position
+					}));
+				}
+			} else if (typeof gradient[0] === "string") {
+				this.data = gradient.map((val, i) => ({
+					color: d3.hsl(val),
+					position: i / count
+				}));
+			}
+		},
 		percentage(val) {
 			return val * 100;
+		},
+		dataChanged() {
+			this.$emit("gradientChange", {
+				gradient: this.colorGradient,
+				colors: this.data
+			});
 		},
 		stopDrag() {
 			this.dragging = false;
@@ -182,11 +184,10 @@ export default {
 		},
 		remove(index) {
 			this.data.splice(index, 1);
+			this.dataChanged();
 
 			this.selectedIndex =
-				this.selectedIndex < this.data.length
-					? Math.max(this.selectedIndex, 0)
-					: 0;
+				this.selectedIndex < this.data.length ? Math.max(this.selectedIndex, 0) : 0;
 			this.$emit("selectionChange", {
 				color: this.data[this.selectedIndex].color,
 				index: this.selectedIndex,
@@ -205,8 +206,7 @@ export default {
 			this.dragging = true;
 			this.hoverIndex = -1;
 
-			if (this.currentFocus == this.$el && this.selectedIndex == index)
-				return;
+			if (this.currentFocus == this.$el && this.selectedIndex == index) return;
 
 			this.selectedIndex = index;
 			this.$emit("selectionChange", {
@@ -216,12 +216,8 @@ export default {
 			});
 		},
 		knobClass(index) {
-			const selectedClass = `handle--selected ${
-				this.classPrefix
-			}-handle--selected`;
-			const hoverClass = `handle--hover ${
-				this.classPrefix
-			}-handle--hover`;
+			const selectedClass = `handle--selected ${this.classPrefix}-handle--selected`;
+			const hoverClass = `handle--hover ${this.classPrefix}-handle--hover`;
 			return [
 				this.selectedIndex == index ? selectedClass : "",
 				this.hoverIndex == index ? hoverClass : ""
@@ -245,15 +241,11 @@ export default {
 			var pos = this.getEventPosition(event);
 
 			var relativeX = (pos.clientX - rect.left) / rect.width;
-			let neighborIndices = this.pointsSurroundingPercentage(
-				this.data,
-				relativeX
-			);
+			let neighborIndices = this.pointsSurroundingPercentage(this.data, relativeX);
 
 			let relval =
 				(relativeX - this.data[neighborIndices[0]].position) /
-				(this.data[neighborIndices[1]].position -
-					this.data[neighborIndices[0]].position);
+				(this.data[neighborIndices[1]].position - this.data[neighborIndices[0]].position);
 
 			this.data.push({
 				color: d3.hsl(
@@ -264,6 +256,7 @@ export default {
 				),
 				position: relativeX
 			});
+			this.dataChanged();
 
 			this.selectedIndex = this.data.length - 1;
 			this.dragging = true;
@@ -294,10 +287,7 @@ export default {
 						distance: dist,
 						index: index
 					};
-				} else if (
-					val.position >= percentage &&
-					highest.distance > dist
-				) {
+				} else if (val.position >= percentage && highest.distance > dist) {
 					highest = {
 						position: val.position,
 						distance: dist,
@@ -320,24 +310,22 @@ export default {
 				x: (pos.clientX - rect.left) / rect.width,
 				y: (pos.clientY - rect.top) / rect.height
 			};
+			relative.x = Math.min(Math.max(relative.x, 0), 1);
 
 			let newPosition = 0;
-			if (
-				this.data.length > 1 &&
-				Math.abs(relative.y) > this.removeOffset
-			) {
+			if (this.data.length > 1 && Math.abs(relative.y) > this.removeOffset) {
 				newPosition = -1;
-			} else {
-				relative.x = Math.min(Math.max(relative.x, 0), 1);
-				if (this.data[this.selectedIndex].position == relative.x)
-					return;
+			} else if (this.data[this.selectedIndex].position != relative.x) {
 				newPosition = relative.x;
+			} else {
+				return;
 			}
 
 			this.$set(this.data, this.selectedIndex, {
 				color: this.data[this.selectedIndex].color,
 				position: newPosition
 			});
+			this.dataChanged();
 		}
 	},
 	computed: {
@@ -366,16 +354,6 @@ export default {
 			});
 
 			return s;
-		},
-		colorPositions() {
-			let copy = this.data
-				.concat()
-				.sort((a, b) => (a.position > b.position ? 1 : -1));
-
-			return copy.map(val => ({
-				color: val.color,
-				position: val.position
-			}));
 		}
 	}
 };
@@ -435,8 +413,7 @@ export default {
 	}
 
 	&--selected {
-		box-shadow: 0em 0em 0em 0.15em white,
-			0em 0em 0em 0.23em rgba(0, 0, 0, 0.5),
+		box-shadow: 0em 0em 0em 0.15em white, 0em 0em 0em 0.23em rgba(0, 0, 0, 0.5),
 			0em 0em 0em 0.1em rgba(0, 0, 0, 0.5) inset;
 
 		transform: translateY(-50%) translateX(-50%) scale(1.35, 1.35);
