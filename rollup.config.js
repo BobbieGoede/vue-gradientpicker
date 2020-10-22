@@ -14,22 +14,22 @@ const baseConfig = {
 
 	plugins: [
 		replace({
-			"process.env.NODE_ENV": JSON.stringify("production")
+			"process.env.NODE_ENV": JSON.stringify("production"),
 		}),
 		commonjs(),
 		vue({
 			css: true,
 			compileTemplate: true,
 			template: {
-				isProduction: true
-			}
+				isProduction: true,
+			},
 		}),
 		babel({
 			exclude: "node_modules/**",
-			runtimeHelpers: true
+			runtimeHelpers: true,
 		}),
-		buble()
-	]
+		buble(),
+	],
 };
 
 // UMD/IIFE shared settings: externals and output.globals
@@ -51,16 +51,16 @@ if (!argv.format || argv.format === "es") {
 		output: {
 			file: "dist/vue-gradientpicker.esm.js",
 			format: "esm",
-			exports: "named"
+			exports: "named",
 		},
 		plugins: [
 			...baseConfig.plugins,
 			terser({
 				output: {
-					ecma: 6
-				}
-			})
-		]
+					ecma: 6,
+				},
+			}),
+		],
 	};
 	buildFormats.push(esConfig);
 }
@@ -75,16 +75,16 @@ if (!argv.format || argv.format === "umd") {
 			format: "umd",
 			name: "VueGradientpicker",
 			exports: "named",
-			globals
+			globals,
 		},
 		plugins: [
 			...baseConfig.plugins,
 			terser({
 				output: {
-					ecma: 6
-				}
-			})
-		]
+					ecma: 6,
+				},
+			}),
+		],
 	};
 	buildFormats.push(umdConfig);
 }
@@ -99,16 +99,16 @@ if (!argv.format || argv.format === "iife") {
 			format: "iife",
 			name: "VueGradientpicker",
 			exports: "named",
-			globals
+			globals,
 		},
 		plugins: [
 			...baseConfig.plugins,
 			terser({
 				output: {
-					ecma: 5
-				}
-			})
-		]
+					ecma: 5,
+				},
+			}),
+		],
 	};
 	buildFormats.push(unpkgConfig);
 }

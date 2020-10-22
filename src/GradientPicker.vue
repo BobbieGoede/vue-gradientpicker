@@ -22,7 +22,7 @@
 				v-show="data[i].position >= 0"
 				class="handle"
 				:class="[`${classPrefix}-handle`, knobClass(i)]"
-				:style="{backgroundColor: data[i].color}"
+				:style="{ backgroundColor: data[i].color }"
 			></div>
 		</div>
 	</div>
@@ -31,7 +31,7 @@
 <script>
 const d3 = {
 	...require("d3-interpolate"),
-	...require("d3-color")
+	...require("d3-color"),
 };
 
 export default {
@@ -42,31 +42,31 @@ export default {
 				h: 0,
 				s: 0,
 				l: 0,
-				opacity: 0
-			})
+				opacity: 0,
+			}),
 		},
 		gradient: {
 			type: Array,
-			default: () => ["dodgerblue", "blueviolet"]
+			default: () => ["dodgerblue", "blueviolet"],
 		},
 		// Used to determine whether this instance of the picker is selected.
 		// Leave undefined if only one picker is used.
 		currentFocus: {
 			type: HTMLDivElement,
-			default: undefined
+			default: undefined,
 		},
 		// Set a custom class to override default styling.
 		// Does not remove required classes for the gradient picker to function.
 		classPrefix: {
 			type: String,
-			default: "goede"
+			default: "goede",
 		},
 		// Determines the vertical drag distance required to remove a selected node.
 		// distance to remove = pickerHeight * removeOffset
 		removeOffset: {
 			type: Number,
-			default: 5
-		}
+			default: 5,
+		},
 	},
 	data() {
 		return {
@@ -74,7 +74,7 @@ export default {
 			selectedIndex: -1,
 			hoverIndex: -1,
 			dragging: false,
-			checkerImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAL0lEQVQ4T2N89uzZfwY8QFJSEp80A+OoAcMiDP4DAb6Ifv78Of50MGoAA+PQDwMAuX5VedFT3cEAAAAASUVORK5CYII=")`
+			checkerImage: `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAL0lEQVQ4T2N89uzZfwY8QFJSEp80A+OoAcMiDP4DAb6Ifv78Of50MGoAA+PQDwMAuX5VedFT3cEAAAAASUVORK5CYII=")`,
 		};
 	},
 	created() {
@@ -86,9 +86,9 @@ export default {
 		window.addEventListener("touchend", this.stopDrag);
 		window.addEventListener("touchmove", this.setValue, { passive: false });
 
-		this.$emit("gradientChange", {
+		this.$emit("gradient-change", {
 			gradient: this.colorGradient,
-			colors: this.data
+			colors: this.data,
 		});
 	},
 	beforeDestroy() {
@@ -96,45 +96,42 @@ export default {
 		window.removeEventListener("mousemove", this.setValue);
 		window.removeEventListener("touchend", this.stopDrag);
 		window.removeEventListener("touchmove", this.setValue, {
-			passive: false
+			passive: false,
 		});
 	},
 	watch: {
 		selectionColor: {
 			handler(newVal) {
-				if (
-					this.selectedIndex < 0 ||
-					this.data[this.selectedIndex].color == d3.hsl(newVal)
-				) {
+				if (this.selectedIndex < 0 || this.data[this.selectedIndex].color == d3.hsl(newVal)) {
 					return;
 				}
 
 				this.$set(this.data, this.selectedIndex, {
 					color: d3.hsl(newVal),
-					position: this.data[this.selectedIndex].position
+					position: this.data[this.selectedIndex].position,
 				});
-			}
+			},
 		},
 		currentFocus: {
 			handler(newVal) {
 				if (newVal != this.$el) {
 					this.selectedIndex = -1;
 				} else if (this.selectedIndex == -1) {
-					this.$emit("selectionChange", {
+					this.$emit("selection-change", {
 						color: this.data[0].color,
 						index: 0,
-						element: this.$el
+						element: this.$el,
 					});
 					this.selectedIndex = 0;
 				}
-			}
+			},
 		},
 		gradient: {
 			handler(newVal) {
 				this.setData(newVal);
 			},
-			deep: true
-		}
+			deep: true,
+		},
 	},
 	methods: {
 		setData(gradient) {
@@ -143,18 +140,18 @@ export default {
 				if (gradient[0].position === undefined) {
 					this.data = gradient.map((val, i) => ({
 						color: d3.hsl(val.color),
-						position: i / count
+						position: i / count,
 					}));
 				} else {
 					this.data = gradient.map(val => ({
 						color: d3.hsl(val.color),
-						position: val.position
+						position: val.position,
 					}));
 				}
 			} else if (typeof gradient[0] === "string") {
 				this.data = gradient.map((val, i) => ({
 					color: d3.hsl(val),
-					position: i / count
+					position: i / count,
 				}));
 			}
 		},
@@ -162,9 +159,9 @@ export default {
 			return val * 100;
 		},
 		dataChanged() {
-			this.$emit("gradientChange", {
+			this.$emit("gradient-change", {
 				gradient: this.colorGradient,
-				colors: this.data
+				colors: this.data,
 			});
 		},
 		stopDrag() {
@@ -186,12 +183,11 @@ export default {
 			this.data.splice(index, 1);
 			this.dataChanged();
 
-			this.selectedIndex =
-				this.selectedIndex < this.data.length ? Math.max(this.selectedIndex, 0) : 0;
-			this.$emit("selectionChange", {
+			this.selectedIndex = this.selectedIndex < this.data.length ? Math.max(this.selectedIndex, 0) : 0;
+			this.$emit("selection-change", {
 				color: this.data[this.selectedIndex].color,
 				index: this.selectedIndex,
-				element: this.$el
+				element: this.$el,
 			});
 		},
 		hover(index) {
@@ -209,32 +205,22 @@ export default {
 			if (this.currentFocus == this.$el && this.selectedIndex == index) return;
 
 			this.selectedIndex = index;
-			this.$emit("selectionChange", {
+			this.$emit("selection-change", {
 				color: this.data[index].color,
 				index: index,
-				element: this.$el
+				element: this.$el,
 			});
 		},
 		knobClass(index) {
 			const selectedClass = `handle--selected ${this.classPrefix}-handle--selected`;
 			const hoverClass = `handle--hover ${this.classPrefix}-handle--hover`;
-			return [
-				this.selectedIndex == index ? selectedClass : "",
-				this.hoverIndex == index ? hoverClass : ""
-			];
+			return [this.selectedIndex == index ? selectedClass : "", this.hoverIndex == index ? hoverClass : ""];
 		},
 		containerClass(index) {
-			const selectedClass = `handle-container--selected ${
-				this.classPrefix
-			}-handle-container--selected`;
-			const hoverClass = `handle-container--hover ${
-				this.classPrefix
-			}-handle-container--hover`;
+			const selectedClass = `handle-container--selected ${this.classPrefix}-handle-container--selected`;
+			const hoverClass = `handle-container--hover ${this.classPrefix}-handle-container--hover`;
 
-			return [
-				this.selectedIndex == index ? selectedClass : "",
-				this.hoverIndex == index ? hoverClass : ""
-			];
+			return [this.selectedIndex == index ? selectedClass : "", this.hoverIndex == index ? hoverClass : ""];
 		},
 		addAtClick(event) {
 			var rect = this.$refs.slider.getBoundingClientRect();
@@ -249,34 +235,31 @@ export default {
 
 			this.data.push({
 				color: d3.hsl(
-					d3.interpolateRgb(
-						this.data[neighborIndices[0]].color,
-						this.data[neighborIndices[1]].color
-					)(relval)
+					d3.interpolateRgb(this.data[neighborIndices[0]].color, this.data[neighborIndices[1]].color)(relval)
 				),
-				position: relativeX
+				position: relativeX,
 			});
 			this.dataChanged();
 
 			this.selectedIndex = this.data.length - 1;
 			this.dragging = true;
-			this.$emit("selectionChange", {
+			this.$emit("selection-change", {
 				color: this.data[this.selectedIndex].color,
 				index: this.selectedIndex,
-				element: this.$el
+				element: this.$el,
 			});
 		},
 		pointsSurroundingPercentage(data, percentage) {
 			let lowest = {
 				position: 99,
 				distance: 99,
-				index: -1
+				index: -1,
 			};
 
 			let highest = {
 				position: -99,
 				distance: 99,
-				index: -1
+				index: -1,
 			};
 
 			data.forEach((val, index) => {
@@ -285,13 +268,13 @@ export default {
 					lowest = {
 						position: val.position,
 						distance: dist,
-						index: index
+						index: index,
 					};
 				} else if (val.position >= percentage && highest.distance > dist) {
 					highest = {
 						position: val.position,
 						distance: dist,
-						index: index
+						index: index,
 					};
 				}
 			});
@@ -308,7 +291,7 @@ export default {
 			var pos = this.getEventPosition(event);
 			let relative = {
 				x: (pos.clientX - rect.left) / rect.width,
-				y: (pos.clientY - rect.top) / rect.height
+				y: (pos.clientY - rect.top) / rect.height,
 			};
 			relative.x = Math.min(Math.max(relative.x, 0), 1);
 
@@ -323,10 +306,10 @@ export default {
 
 			this.$set(this.data, this.selectedIndex, {
 				color: this.data[this.selectedIndex].color,
-				position: newPosition
+				position: newPosition,
 			});
 			this.dataChanged();
-		}
+		},
 	},
 	computed: {
 		pickerBackground: function() {
@@ -348,14 +331,12 @@ export default {
 			}
 
 			copy.forEach((val, i) => {
-				s += `${val.color} ${(val.position * 100).toFixed(2)}%${
-					i == copy.length - 1 ? "" : ", "
-				}`;
+				s += `${val.color} ${(val.position * 100).toFixed(2)}%${i == copy.length - 1 ? "" : ", "}`;
 			});
 
 			return s;
-		}
-	}
+		},
+	},
 };
 </script>
 
@@ -420,5 +401,3 @@ export default {
 	}
 }
 </style>
-
-
