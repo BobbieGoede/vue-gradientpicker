@@ -1,10 +1,11 @@
 # @goede/vue-gradientpicker
+
 ![@goede/vue-gradientpicker cover image](https://goede.site/gradientpicker/gradient-picker-cover.png)
 [![npm version](https://img.shields.io/npm/v/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
 [![npm version](https://img.shields.io/npm/dt/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
+
 ### [Live demo](https://goede.site/gradientpicker/index.html "Live demo")
 
-	
 A simple & intuitive gradient picker made with Vue.js. Tap on the gradient to add a new node, drag a node to change its position or to remove it from the gradient.
 
 ### Install & import
@@ -19,42 +20,42 @@ Import the gradient picker from @goede/vue-gradientpicker at the top of the vue 
 
 ```html
 <template>
-  <GradientPicker
-    @selectionChange='setPickerFocus'
-    @gradientChange='onGradientChange'
-    :selectionColor='nodeColor'
-    :currentFocus='currentFocus'
-  />
+	<GradientPicker
+		@selection-change="setPickerFocus"
+		@gradient-change="onGradientChange"
+		:selection-color="nodeColor"
+		:current-focus="currentFocus"
+	/>
 </template>
 
 <script>
-// Import component
-import GradientPicker from "@goede/vue-gradientpicker";
+	// Import component
+	import GradientPicker from "@goede/vue-gradientpicker";
 
-export default {
-  // Register component
-  components: {
-  GradientPicker: GradientPicker
-  },
-  data: function(){
-    return{
-      currentFocus: null,
-      nodeColor: ""
-    }
-  },
-  methods: {
-    setPickerFocus: function(e) {
-      this.currentFocus = e.element;
-      this.nodeColor = e.color;
-    },
-    onGradientChange: function(e){
-      document.documentElement.style.background =
-	    `linear-gradient(to right, ${colors.gradient})`;
-    }
-  }
-}
+	export default {
+		// Register component
+		components: {
+			GradientPicker,
+		},
+		data: function() {
+			return {
+				currentFocus: null,
+				nodeColor: "",
+			};
+		},
+		methods: {
+			setPickerFocus: function(e) {
+				this.currentFocus = e.element;
+				this.nodeColor = e.color;
+			},
+			onGradientChange: function(e) {
+				document.documentElement.style.background = `linear-gradient(to right, ${colors.gradient})`;
+			},
+		},
+	};
 </script>
 ```
+
 ### Properties
 
 <table>
@@ -125,7 +126,7 @@ For example;
 	<th>Description</th>
 </tr>
 <tr>
-	<td>selectionChange</td>
+	<td>selection-change</td>
 	<td><pre class="javascript">{
   color: ColorObject,
   element: HTMLDivElement,
@@ -134,7 +135,7 @@ For example;
 	<td>Emitted when a new node is selected.</td>
 </tr>
 <tr>
-	<td>gradientChange</td>
+	<td>gradient-change</td>
 	<td><pre class="javascript">{
   gradient: String,
   colors: [NodeObject]
@@ -144,5 +145,6 @@ For example;
 Gradient property is a string containing each color with their position percentage, intended for css gradients.
 
 Colors property is an array with NodeObjects, containing each color as an hsl object and their position (0...1)</td>
+
 </tr>
 </table>
