@@ -102,9 +102,8 @@ export default {
 	watch: {
 		selectionColor: {
 			handler(newVal) {
-				if (this.selectedIndex < 0 || this.data[this.selectedIndex].color == d3.hsl(newVal)) {
-					return;
-				}
+				if (this.selectedIndex < 0) return;
+				if (this.data[this.selectedIndex].color === d3.hsl(newVal)) return;
 
 				this.$set(this.data, this.selectedIndex, {
 					color: d3.hsl(newVal),
@@ -115,9 +114,9 @@ export default {
 		},
 		currentFocus: {
 			handler(newVal) {
-				if (newVal != this.$el) {
+				if (newVal !== this.$el) {
 					this.selectedIndex = -1;
-				} else if (this.selectedIndex == -1) {
+				} else if (this.selectedIndex === -1) {
 					this.$emit("selection-change", {
 						color: this.data[0].color,
 						index: 0,
@@ -175,9 +174,8 @@ export default {
 		},
 		getEventPosition(event) {
 			if (event.touches === undefined) return event;
-			if (event.cancelable) {
-				event.preventDefault();
-			}
+			if (event.cancelable) event.preventDefault();
+
 			return event.touches[0];
 		},
 		remove(index) {
@@ -203,7 +201,7 @@ export default {
 			this.dragging = true;
 			this.hoverIndex = -1;
 
-			if (this.currentFocus == this.$el && this.selectedIndex == index) return;
+			if (this.currentFocus === this.$el && this.selectedIndex === index) return;
 
 			this.selectedIndex = index;
 			this.$emit("selection-change", {
@@ -215,13 +213,14 @@ export default {
 		knobClass(index) {
 			const selectedClass = `handle--selected ${this.classPrefix}-handle--selected`;
 			const hoverClass = `handle--hover ${this.classPrefix}-handle--hover`;
-			return [this.selectedIndex == index ? selectedClass : "", this.hoverIndex == index ? hoverClass : ""];
+
+			return [this.selectedIndex === index ? selectedClass : "", this.hoverIndex === index ? hoverClass : ""];
 		},
 		containerClass(index) {
 			const selectedClass = `handle-container--selected ${this.classPrefix}-handle-container--selected`;
 			const hoverClass = `handle-container--hover ${this.classPrefix}-handle-container--hover`;
 
-			return [this.selectedIndex == index ? selectedClass : "", this.hoverIndex == index ? hoverClass : ""];
+			return [this.selectedIndex === index ? selectedClass : "", this.hoverIndex === index ? hoverClass : ""];
 		},
 		addAtClick(event) {
 			var rect = this.$refs.slider.getBoundingClientRect();
@@ -299,7 +298,7 @@ export default {
 			let newPosition = 0;
 			if (this.data.length > 1 && Math.abs(relative.y) > this.removeOffset) {
 				newPosition = -1;
-			} else if (this.data[this.selectedIndex].position != relative.x) {
+			} else if (this.data[this.selectedIndex]?.position !== relative.x) {
 				newPosition = relative.x;
 			} else {
 				return;
@@ -314,28 +313,18 @@ export default {
 	},
 	computed: {
 		pickerBackground: function() {
-			return `linear-gradient(to right, ${this.colorGradient}), 
-			${this.checkerImage}`;
+			return `linear-gradient(to right, ${this.colorGradient}), ${this.checkerImage}`;
 		},
 		colorGradient() {
-			let s = "";
-
-			let copy = this.data
-				.concat()
+			const copy = [...this.data]
 				.sort((a, b) => (a.position > b.position ? 1 : -1))
 				.filter(val => val.position >= 0);
 
-			if (copy.length == 1) {
-				s += `${copy[0].color} ${(copy[0].position * 100).toFixed(2)}%, 
-				${copy[0].color} ${(copy[0].position * 100).toFixed(2)}%`;
-				return s;
+			if (copy.length === 1) {
+				copy.push(copy[0]);
 			}
 
-			copy.forEach((val, i) => {
-				s += `${val.color} ${(val.position * 100).toFixed(2)}%${i == copy.length - 1 ? "" : ", "}`;
-			});
-
-			return s;
+			return copy.map(x => `${x.color} ${this.percentage(x.position).toFixed(2)}%`).join(", ");
 		},
 	},
 };
