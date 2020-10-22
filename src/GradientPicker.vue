@@ -110,6 +110,7 @@ export default {
 					color: d3.hsl(newVal),
 					position: this.data[this.selectedIndex].position,
 				});
+				this.dataChanged();
 			},
 		},
 		currentFocus: {
