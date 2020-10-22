@@ -1,9 +1,10 @@
 // rollup.config.js
-import vue from "rollup-plugin-vue";
-import buble from "rollup-plugin-buble";
-import babel from "rollup-plugin-babel";
-import commonjs from "rollup-plugin-commonjs";
-import replace from "rollup-plugin-replace";
+import vuePlugin from "rollup-plugin-vue";
+import buble from "@rollup/plugin-buble";
+import babel from "@rollup/plugin-babel";
+import commonjs from "@rollup/plugin-commonjs";
+import replace from "@rollup/plugin-replace";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 import { terser } from "rollup-plugin-terser";
 import minimist from "minimist";
 
@@ -13,20 +14,20 @@ const baseConfig = {
 	input: "src/entry.js",
 
 	plugins: [
+		nodeResolve(),
 		replace({
-			"process.env.NODE_ENV": JSON.stringify("production"),
+			__buildEnv__: JSON.stringify("production"),
 		}),
 		commonjs(),
-		vue({
+		vuePlugin({
 			css: true,
-			compileTemplate: true,
 			template: {
 				isProduction: true,
 			},
 		}),
 		babel({
 			exclude: "node_modules/**",
-			runtimeHelpers: true,
+			babelHelpers: "runtime",
 		}),
 		buble(),
 	],
