@@ -1,8 +1,12 @@
 {
   "name": "@goede/vue-gradientpicker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "author": "Bobbie Goede <bobbiegoede@gmail.com>",
+  "repository": {
+	"type" : "git",
+	"url" : "https://github.com/bobbiegoede/vue-gradientpicker"
+  },
   "keywords": [
     "gradient",
     "gradientpicker",

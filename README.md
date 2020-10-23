@@ -3,6 +3,7 @@
 ![@goede/vue-gradientpicker cover image](https://goede.site/gradientpicker/gradient-picker-cover.png)
 [![npm version](https://img.shields.io/npm/v/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
 [![npm version](https://img.shields.io/npm/dt/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
+[![npm version](https://img.shields.io/snyk/vulnerabilities/npm/@goede/vue-gradientpicker?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
 
 ### [Live demo](https://goede.site/gradientpicker/index.html "Live demo")
 
