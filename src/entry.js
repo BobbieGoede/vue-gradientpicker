@@ -1,6 +1,6 @@
 // Import vue component
 import component from "./GradientPicker.vue";
-
+// import "./GradientPicker.vue?vue&type=style&lang=scss";
 // install function executed by Vue.use()
 function install(Vue) {
 	if (install.installed) return;
