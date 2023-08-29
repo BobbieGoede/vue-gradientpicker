@@ -14,12 +14,36 @@
 		"sourceMap": true,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["src/*"]
+			"@/*": [
+				"src/*"
+			]
 		},
-		"lib": ["esnext", "dom", "dom.iterable", "scripthost", "ES2017.Object"],
+		"types": [
+			"vitest/globals",
+		],
+		"declaration": true,
+		"lib": [
+			"esnext",
+			"dom",
+			"dom.iterable",
+			"scripthost",
+			"ES2017.Object"
+		],
 		"outDir": "./dist"
 	},
-	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
-	"exclude": ["node_modules"],
-	"references": [{ "path": "./tsconfig.node.json" }]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.d.ts",
+		"src/**/*.tsx",
+		"src/**/*.vue",
+		"cypress.d.ts",
+	],
+	"exclude": [
+		"node_modules"
+	],
+	"references": [
+		{
+			"path": "./tsconfig.node.json"
+		}
+	]
 }

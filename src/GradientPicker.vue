@@ -1,122 +1,113 @@
-<template>
-	<div
-		ref="el"
-		class="gradient-picker"
-		:class="`${classPrefix}-gradient-picker`"
-		:style="{ background: pickerBackground }"
-		@mousedown.prevent="addAtClick"
-		@touchstart.prevent="addAtClick"
-	>
-		<div
-			v-for="(val, i) in data"
-			:key="i"
-			class="handle-container"
-			:class="[`${classPrefix}-handle-container`, containerClass(i)]"
-			:style="{ left: `${percentage(val.position)}%` }"
-			@mousedown.prevent.stop="select(i)"
-			@touchstart.prevent.stop="select(i)"
-			@mouseover="hover(i)"
-			@mouseleave="unhover()"
-		>
-			<div
-				v-show="data[i].position >= 0"
-				class="handle"
-				:class="[`${classPrefix}-handle`, knobClass(i)]"
-				:style="{ backgroundColor: data[i].color.toString() }"
-			></div>
-		</div>
-	</div>
-</template>
-
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import * as d3Interpolate from "d3-interpolate";
-import * as d3Color from "d3-color";
+import { computed, onMounted, ref, watch, nextTick } from "vue";
+import { useEventListener } from "@vueuse/core";
+import { hsl, HSLColor, color, ColorCommonInstance, ColorSpaceObject, lch, hcl, Color, rgb, lab } from "d3-color";
+import HandleContainer from "./components/HandleContainer.vue";
+import { convertColor, interpolateColor, type ColorSpace } from "./assets/color-helpers";
 
-const d3 = { ...d3Interpolate, ...d3Color };
-
-type HSLColor = d3Color.HSLColor;
-type ColorData = { position: number; color: HSLColor };
-type SimplifiedColor = {
-	h: 0;
-	s: 0;
-	l: 0;
-	opacity: 0;
-};
+type ColorData = { position: number; color: ColorSpaceObject };
+type SimplifiedColor = string | ColorSpaceObject | ColorCommonInstance;
 
 type Props = {
+	modelValue: string[] | ColorData[];
 	selectionColor?: SimplifiedColor;
-	gradient?: string[];
-	// Used to determine whether this instance of the picker is selected.
-	// Leave undefined if only one picker is used.
-	currentFocus?: HTMLDivElement;
-	// Set a custom class to override default styling.
-	// Does not remove required classes for the gradient picker to function.
+	color?: SimplifiedColor;
+	selection?: { index: number; color: SimplifiedColor; element: HTMLDivElement };
+	colorSpace: ColorSpace;
+	gradient?: string;
+	/** Used to determine whether this instance of the picker is selected.
+	 * Leave undefined if only one picker is used.
+	 **/
+	focus?: HTMLDivElement;
+	/** Set a custom class to override default styling.
+	 * Does not remove required classes for the gradient picker to function.
+	 **/
 	classPrefix?: string;
-	// Determines the vertical drag distance required to remove a selected node.
-	// distance to remove = pickerHeight * removeOffset
+	/** Determines the vertical drag distance required to remove a selected node.
+	 * distance to remove = pickerHeight * removeOffset
+	 **/
 	removeOffset?: number;
 };
+
 const props = withDefaults(defineProps<Props>(), {
-	selectionColor: () => ({ h: 0, s: 0, l: 0, opacity: 0 }),
-	gradient: () => ["dodgerblue", "blueviolet"],
-	currentFocus: undefined,
+	modelValue: () => ["dodgerblue", "blueviolet"],
+	selectionColor: undefined,
+	selection: undefined,
+	color: undefined,
+	gradient: "",
+	colorSpace: "srgb",
+	focus: undefined,
 	classPrefix: "goede",
-	removeOffset: 5,
+	removeOffset: 1,
 });
 
-const emit = defineEmits(["selection-change", "gradient-change"]);
+// const convertColor = (color: Parameters<typeof convertColorHelper>[0]) => convertColorHelper(color, props.colorSpace);
+
+const emit = defineEmits<{
+	(e: "gradient", data: { gradient: string; colors: ColorData[] }): void;
+	(e: "update:model-value", colors: ColorData[]): void;
+	(e: "update:select", element: HTMLElement | undefined): void;
+	(e: "update:gradient", gradient: string): void;
+	(e: "update:selection", data: { element: HTMLElement | undefined; color: SimplifiedColor; index: number }): void;
+}>();
 
 const el = ref<HTMLElement>();
 const data = ref<ColorData[]>([]);
 const selectedIndex = ref(-1);
 const hoverIndex = ref(-1);
 const dragging = ref(false);
+
 const checkerImage = `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAL0lEQVQ4T2N89uzZfwY8QFJSEp80A+OoAcMiDP4DAb6Ifv78Of50MGoAA+PQDwMAuX5VedFT3cEAAAAASUVORK5CYII=")`;
 
-const pickerBackground = computed(() => `linear-gradient(to right, ${colorGradient.value}), ${checkerImage}`);
+const pickerBackground = computed(() => `${cssGradient.value}, ${checkerImage}`);
+const cssGradient = computed(() => `linear-gradient(in ${props.colorSpace} to right, ${colorGradient.value})`);
 const colorGradient = computed(() => {
 	const copy = [...data.value].sort((a, b) => (a.position > b.position ? 1 : -1)).filter((val) => val.position >= 0);
 
-	if (copy.length === 1) {
-		copy.push(copy[0]);
-	}
+	if (copy.length === 1) copy.push(copy[0]);
 
-	return copy.map((x) => `${x.color} ${percentage(x.position).toFixed(2)}%`).join(", ");
+	return copy.map((x) => `${x.color.formatHsl()} ${(x.position * 100).toFixed(2)}%`).join(", ");
 });
 
 const isArrayOfColorData = (val: (string | ColorData)[]): val is ColorData[] =>
-	val.filter((x): x is ColorData => x === typeof "string").length > 0;
+	val.filter((x) => typeof x !== "string").length > 0;
 
-const setData = (gradient: (string | ColorData)[]) => {
+const gradientHasPositions = (val: ColorData[]) => val.every((x) => x.position != null);
+const setData = (gradient: (string | ColorData)[], colorSpace: ColorSpace) => {
 	let count = gradient.length - 1;
+	console.log("setting data with", colorSpace);
 
-	if (typeof gradient[0] === "object" && isArrayOfColorData(gradient)) {
-		if (gradient[0].position === undefined) {
-			data.value = gradient.map((val, i) => ({ color: d3.hsl(val.color), position: i / count }));
+	if (isArrayOfColorData(gradient)) {
+		if (gradientHasPositions(gradient)) {
+			data.value = gradient.map((val) => ({
+				color: convertColor(val.color, colorSpace),
+				position: val.position,
+			}));
 		} else {
-			data.value = gradient.map((val) => ({ color: d3.hsl(val.color), position: val.position }));
+			data.value = gradient.map((val, i) => ({
+				color: convertColor(val.color, colorSpace),
+				position: i / count,
+			}));
 		}
-	} else if (typeof gradient[0] === "string") {
+	} else {
+		// @ts-ignore
 		data.value = gradient
-			.filter((x): x is string => x !== typeof "string")
-			.map((val: string, i) => ({ color: d3.hsl(val), position: i / count }));
+			.filter((x): x is string => typeof x === "string")
+			.map((val: string, i) => ({ color: convertColor(val, colorSpace), position: i / count }));
 	}
 };
 
-const percentage = (val: number) => val * 100;
-
 const dataChanged = () => {
-	emit("gradient-change", { gradient: colorGradient.value, colors: data.value });
+	emit("gradient", { gradient: colorGradient.value, colors: data.value });
+	emit("update:gradient", cssGradient.value);
+	emit("update:model-value", data.value);
 };
 
 const stopDrag = () => {
 	dragging.value = false;
 
-	let index = data.value.findIndex((val) => val.position < 0);
-	if (index >= 0) {
-		remove(index);
-	}
+	const index = data.value.findIndex((val) => val.position < 0);
+	if (index >= 0) remove(index);
 };
 
 const getEventPosition = (event: MouseEvent | TouchEvent) => {
@@ -131,66 +122,55 @@ const remove = (index: number) => {
 	dataChanged();
 
 	selectedIndex.value = selectedIndex.value < data.value.length ? Math.max(selectedIndex.value, 0) : 0;
-	emit("selection-change", {
-		color: data.value[selectedIndex.value].color,
+	emit("update:selection", {
+		color: data.value[selectedIndex.value].color.toString(),
 		index: selectedIndex.value,
 		element: el.value,
 	});
+	emit("update:select", el.value);
 };
 
-const hover = (index: number) => {
+const onHandleHover = (index: number) => {
 	if (dragging.value) return;
 	hoverIndex.value = index;
 };
 
-const unhover = () => {
-	if (dragging.value) return;
-	hoverIndex.value = -1;
-};
-
-const select = (index: number) => {
+const onHandleSelect = (index: number) => {
 	dragging.value = true;
 	hoverIndex.value = -1;
 
-	if (props.currentFocus === el.value && selectedIndex.value === index) return;
+	if (props.focus === el.value && selectedIndex.value === index) return;
 
 	selectedIndex.value = index;
-	emit("selection-change", {
+	emit("update:selection", {
 		color: data.value[index].color,
 		index: index,
 		element: el.value,
 	});
-};
-
-const knobClass = (index: number) => {
-	const selectedClass = `handle--selected ${props.classPrefix}-handle--selected`;
-	const hoverClass = `handle--hover ${props.classPrefix}-handle--hover`;
-
-	return [selectedIndex.value === index ? selectedClass : "", hoverIndex.value === index ? hoverClass : ""];
-};
-
-const containerClass = (index: number) => {
-	const selectedClass = `handle-container--selected ${props.classPrefix}-handle-container--selected`;
-	const hoverClass = `handle-container--hover ${props.classPrefix}-handle-container--hover`;
-
-	return [selectedIndex.value === index ? selectedClass : "", hoverIndex.value === index ? hoverClass : ""];
+	emit("update:select", el.value);
 };
 
 const addAtClick = (event: MouseEvent | TouchEvent) => {
 	if (el.value == null) return;
-	var rect = el.value.getBoundingClientRect();
-	var pos = getEventPosition(event);
+	const rect = el.value.getBoundingClientRect();
+	const pos = getEventPosition(event);
 
-	var relativeX = (pos.clientX - rect.left) / rect.width;
-	let neighborIndices = pointsSurroundingPercentage(data.value, relativeX);
+	const relativeX = (pos.clientX - rect.left) / rect.width;
+	const neighborIndices = pointsSurroundingPercentage(data.value, relativeX);
 
-	let relval =
+	const relVal =
 		(relativeX - data.value[neighborIndices[0]].position) /
 		(data.value[neighborIndices[1]].position - data.value[neighborIndices[0]].position);
 
 	data.value.push({
-		color: d3.hsl(
-			d3.interpolateRgb(data.value[neighborIndices[0]].color, data.value[neighborIndices[1]].color)(relval)
+		color: convertColor(
+			interpolateColor(
+				data.value[neighborIndices[0]].color.toString(),
+				data.value[neighborIndices[1]].color.toString(),
+				relVal,
+				props.colorSpace
+			),
+			props.colorSpace
 		),
 		position: relativeX,
 	});
@@ -198,11 +178,12 @@ const addAtClick = (event: MouseEvent | TouchEvent) => {
 
 	selectedIndex.value = data.value.length - 1;
 	dragging.value = true;
-	emit("selection-change", {
+	emit("update:selection", {
 		color: data.value[selectedIndex.value].color,
 		index: selectedIndex.value,
 		element: el.value,
 	});
+	emit("update:select", el.value);
 };
 
 const pointsSurroundingPercentage = (data: ColorData[], percentage: number) => {
@@ -210,7 +191,7 @@ const pointsSurroundingPercentage = (data: ColorData[], percentage: number) => {
 	let highest = { position: -99, distance: 99, index: -1 };
 
 	data.forEach((val, index) => {
-		let dist = Math.abs(val.position - percentage);
+		const dist = Math.abs(val.position - percentage);
 		if (val.position <= percentage && lowest.distance > dist) {
 			lowest = { position: val.position, distance: dist, index: index };
 		} else if (val.position >= percentage && highest.distance > dist) {
@@ -227,17 +208,23 @@ const pointsSurroundingPercentage = (data: ColorData[], percentage: number) => {
 const setValue = (event: MouseEvent | TouchEvent) => {
 	if (el.value == null) return;
 	if (!dragging.value || selectedIndex.value == -1) return;
-	var rect = el.value.getBoundingClientRect();
+	const rect = el.value.getBoundingClientRect();
 
-	var pos = getEventPosition(event);
-	let relative = {
+	const pos = getEventPosition(event);
+	const relative = {
 		x: (pos.clientX - rect.left) / rect.width,
 		y: (pos.clientY - rect.top) / rect.height,
 	};
+
+	const pixelsFromEdge = Math.abs(
+		pos.clientY > rect.bottom ? pos.clientY - rect.bottom : pos.clientY < rect.top ? pos.clientY - rect.top : 0
+	);
+	const relativeHeightDistance = pixelsFromEdge > 0 ? pixelsFromEdge / rect.height : 0;
+
 	relative.x = Math.min(Math.max(relative.x, 0), 1);
 
 	let newPosition = 0;
-	if (data.value.length > 1 && Math.abs(relative.y) > props.removeOffset) {
+	if (data.value.length > 1 && relativeHeightDistance > props.removeOffset) {
 		newPosition = -1;
 	} else if (data.value[selectedIndex.value]?.position !== relative.x) {
 		newPosition = relative.x;
@@ -245,77 +232,92 @@ const setValue = (event: MouseEvent | TouchEvent) => {
 		return;
 	}
 
-	data.value[selectedIndex.value] = {
-		color: data.value[selectedIndex.value].color,
-		position: newPosition,
-	};
-	// this.$set(this.data, this.selectedIndex, {
-	// 	color: this.data[this.selectedIndex].color,
-	// 	position: newPosition,
-	// });
+	data.value[selectedIndex.value] = { color: data.value[selectedIndex.value].color, position: newPosition };
+
 	dataChanged();
 };
 
 watch(
-	() => props.selectionColor,
-	(newVal) => {
+	() => props.colorSpace,
+	async (val) => {
+		// await nextTick();
+		// console.log([...props.modelValue]);
+		// setData(props.modelValue);
+		// console.log([...props.modelValue]);
+		dataChanged();
+	}
+);
+
+watch(
+	() => props.color,
+	(val) => {
+		if (val == null) return;
 		if (selectedIndex.value < 0) return;
-		if (data.value[selectedIndex.value].color === d3.hsl(newVal.h, newVal.s, newVal.l, newVal.opacity)) return;
+		if (data.value[selectedIndex.value].color === convertColor(val, props.colorSpace)) return;
 
 		data.value[selectedIndex.value] = {
-			color: d3.hsl(newVal.h, newVal.s, newVal.l, newVal.opacity),
+			color: convertColor(val, props.colorSpace),
 			position: data.value[selectedIndex.value].position,
 		};
-		// this.$set(this.data, this.selectedIndex, {
-		// 	color: d3.hsl(newVal),
-		// 	position: this.data[this.selectedIndex].position,
-		// });
+
 		dataChanged();
 	}
 );
 watch(
-	() => props.currentFocus,
-	(newVal) => {
-		if (newVal !== el.value) {
+	() => props.focus,
+	(val) => {
+		if (val !== el.value) {
 			selectedIndex.value = -1;
 		} else if (selectedIndex.value === -1) {
-			emit("selection-change", {
-				color: data.value[0].color,
-				index: 0,
-				element: el.value,
-			});
+			emit("update:selection", { color: data.value[0].color, index: 0, element: el.value });
+			emit("update:select", el.value);
 			selectedIndex.value = 0;
 		}
 	}
 );
+
 watch(
-	() => props.gradient,
-	(newVal) => {
-		setData(newVal);
+	() => props.modelValue,
+	(val, oldVal) => {
+		setData(val, props.colorSpace);
+		console.log([...oldVal], [...val]);
 	}
 );
 
-// console.log(props.gradient);
-setData(props.gradient);
+setData(props.modelValue, props.colorSpace);
+
+useEventListener("mouseup", stopDrag);
+useEventListener("mousemove", setValue);
+useEventListener("touchend", stopDrag);
+useEventListener("touchmove", setValue, { passive: false });
+
 onMounted(() => {
-	window.addEventListener("mouseup", stopDrag);
-	window.addEventListener("mousemove", setValue);
-	window.addEventListener("touchend", stopDrag);
-	window.addEventListener("touchmove", setValue, { passive: false });
-
-	emit("gradient-change", {
-		gradient: colorGradient.value,
-		colors: data.value,
-	});
-});
-
-onBeforeUnmount(() => {
-	window.removeEventListener("mouseup", stopDrag);
-	window.removeEventListener("mousemove", setValue);
-	window.removeEventListener("touchend", stopDrag);
-	window.removeEventListener("touchmove", setValue);
+	emit("update:gradient", cssGradient.value);
 });
 </script>
+
+<template>
+	<div
+		ref="el"
+		:class="['gradient-picker', `${classPrefix}-gradient-picker`]"
+		:style="{ background: pickerBackground }"
+		@mousedown.prevent="addAtClick"
+		@touchstart.prevent="addAtClick"
+	>
+		<HandleContainer
+			v-for="(val, i) in data"
+			:key="i"
+			:value="val"
+			:tabindex="i"
+			:selected="selectedIndex === i"
+			:hovered="hoverIndex === i"
+			:class-prefix="classPrefix"
+			@select="onHandleSelect(i)"
+			@hover="onHandleHover(i)"
+			@blur="onHandleHover(-1)"
+		/>
+	</div>
+</template>
 
 <style lang="scss">
 .gradient-picker {
@@ -338,6 +340,7 @@ onBeforeUnmount(() => {
 	&--hover {
 		z-index: 20;
 	}
+
 	&--selected {
 		z-index: 10;
 	}
@@ -354,6 +357,9 @@ onBeforeUnmount(() => {
 
 .goede-gradient-picker {
 	height: 2.5em;
+	width: calc(100% - 1rem);
+	margin-left: 0.5em;
+	margin-right: 0.5em;
 	border-radius: 0.5em;
 	font-size: 1.25em;
 }

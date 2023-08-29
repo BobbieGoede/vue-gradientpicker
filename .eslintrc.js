@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	root: true,
 
 	env: {
@@ -21,5 +21,6 @@ module.exports = {
 		"plugin:vue/vue3-essential",
 		"@vue/eslint-config-typescript",
 		"@vue/typescript",
+		"prettier",
 	],
 };

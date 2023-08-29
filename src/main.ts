@@ -1,9 +1,6 @@
 import { createApp } from "vue";
-// @ts-ignore
 import App from "./App.vue";
-import GradientPicker from "../dist/vue-gradientpicker.es.js";
-import "../dist/style.css";
-console.log(GradientPicker);
+import GradientPicker from "./GradientPicker.vue";
 
 const app = createApp(App);
 
