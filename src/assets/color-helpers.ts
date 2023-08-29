@@ -37,3 +37,17 @@ export const convertColor = (col: string | ColorCommonInstance | ColorSpaceObjec
 			return rgb(val);
 	}
 };
+
+export const formatColor = (col: ColorSpaceObject, space: ColorSpace) => {
+	switch (space) {
+		case "hsl":
+			return col.formatHsl();
+		case "lab":
+			return col.toString();
+		case "lch":
+			return col.formatHsl();
+		case "srgb":
+		default:
+			return col.formatRgb();
+	}
+};

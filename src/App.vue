@@ -1,6 +1,6 @@
 <template>
 	<div style="display: grid; gap: 1rem">
-		<h4>RGB</h4>
+		<!-- <h4>RGB</h4>
 		<GradientPicker :color-space="'srgb'" v-model="gradient2Rgb" v-model:select="focus" />
 		<h4>LAB</h4>
 		<GradientPicker :color-space="'lab'" v-model="gradient2Lab" v-model:select="focus" />
@@ -11,10 +11,13 @@
 			v-model:selection="currentSelection"
 			v-model:select="focus"
 		/>
-		<h4>HCL</h4>
+		<h4>HCL</h4> -->
+		<select v-model="colorSpace">
+			<option v-for="opt of colorSpaceOptions" :value="opt">{{ opt }}</option>
+		</select>
 		<GradientPicker
-			:color-space="'lch'"
-			v-model="gradient2Hcl"
+			:color-space="colorSpace"
+			:model-value="gradient2Hcl"
 			v-model:selection="currentSelection"
 			v-model:select="focus"
 		/>
@@ -37,6 +40,9 @@ const gradient3 = ref([
 	{ color: "rgb(0, 255, 255)", position: 0 },
 	{ color: "rgb(255,255,0)", position: 1 },
 ]);
+
+const colorSpaceOptions = ["srgb", "lab", "hsl", "lch"];
+const colorSpace = ref("lch");
 
 const gradient2Rgb = ref([...gradient2]);
 const gradient2Lab = ref([...gradient2]);

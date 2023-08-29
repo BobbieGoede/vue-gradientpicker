@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { convertColor } from "@/assets/color-helpers";
 import { ColorSpaceObject, hsl } from "d3-color";
 import { computed } from "vue";
 
