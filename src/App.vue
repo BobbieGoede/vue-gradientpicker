@@ -1,12 +1,16 @@
 <script lang="ts" setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import GradientPicker from "./GradientPicker.vue";
-import type { ColorSpace } from "./assets/color-helpers";
+import { toLinearGradient, type ColorSpace, type GradientStop } from "./colors";
 
-const colorSpaces: ColorSpace[] = ["srgb", "hsl", "lab", "lch"];
-const colorSpace = ref<ColorSpace>("lch");
-const colors = ["#c8ff64", "blue"];
-const gradient = ref("");
+const colorSpaces: ColorSpace[] = ["oklch", "oklab", "lch", "lab", "hsl", "srgb"];
+const colorSpace = ref<ColorSpace>("oklch");
+const stops = ref<GradientStop[]>([
+	{ color: "#c8ff64", position: 0 },
+	{ color: "blue", position: 1 },
+]);
+const selected = ref<number>();
+const gradient = computed(() => toLinearGradient(stops.value, colorSpace.value));
 </script>
 
 <template>
@@ -14,7 +18,9 @@ const gradient = ref("");
 		<select v-model="colorSpace">
 			<option v-for="space of colorSpaces" :key="space" :value="space">{{ space }}</option>
 		</select>
-		<GradientPicker v-model:gradient="gradient" :color-space="colorSpace" :model-value="colors" />
+		<GradientPicker v-model="stops" v-model:selected="selected" :color-space="colorSpace" />
+		<input v-if="selected !== undefined && stops[selected]" v-model="stops[selected].color" />
+		<div class="preview" :style="{ backgroundImage: gradient }" />
 		<code>{{ gradient }}</code>
 	</main>
 </template>
@@ -30,5 +36,10 @@ main {
 	display: grid;
 	gap: 1rem;
 	margin-top: 60px;
+}
+
+.preview {
+	height: 6rem;
+	border-radius: 0.5rem;
 }
 </style>
