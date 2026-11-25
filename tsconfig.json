@@ -1,0 +1,8 @@
+{
+	"extends": "@vue/tsconfig/tsconfig.dom.json",
+	"compilerOptions": {
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": ["vitest-browser-vue"]
+	},
+	"include": ["src", "*.config.ts"]
+}
