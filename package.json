@@ -44,7 +44,6 @@
 		"@vitest/ui": "^0.34.3",
 		"@vue/eslint-config-typescript": "^11.0.2",
 		"@vue/test-utils": "^2.4.1",
-		"@vueuse/core": "^9.6.0",
 		"eslint": "^8.29.0",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-vue": "^9.8.0",

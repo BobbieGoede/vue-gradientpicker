@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from "vue";
-import { useEventListener } from "@vueuse/core";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { ColorCommonInstance, ColorSpaceObject } from "d3-color";
 import HandleContainer from "./components/HandleContainer.vue";
 import { convertColor as convertColorHelper, interpolateColor, type ColorSpace } from "./assets/color-helpers";
@@ -276,14 +275,17 @@ watch(() => props.modelValue, setData);
 
 setData(props.modelValue);
 
-useEventListener("mouseup", stopDrag);
-useEventListener("mousemove", setValue);
-useEventListener("touchend", stopDrag);
-useEventListener("touchmove", setValue, { passive: false });
-
+const listeners = new AbortController();
 onMounted(() => {
+	const { signal } = listeners;
+	window.addEventListener("mouseup", stopDrag, { signal });
+	window.addEventListener("mousemove", setValue, { signal });
+	window.addEventListener("touchend", stopDrag, { signal });
+	window.addEventListener("touchmove", setValue, { signal, passive: false });
+
 	emit("update:gradient", cssGradient.value);
 });
+onBeforeUnmount(() => listeners.abort());
 </script>
 
 <template>
