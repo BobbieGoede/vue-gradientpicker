@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ColorSpaceObject, hsl } from "d3-color";
+import type { ColorSpaceObject } from "d3-color";
 import { computed } from "vue";
 
 type Props = {
@@ -15,12 +15,7 @@ const emit = defineEmits<{
 	(e: "select"): void;
 }>();
 
-const props = withDefaults(defineProps<Props>(), {
-	value: () => ({ position: 0, color: hsl(0, 0, 0, 1) }),
-	classPrefix: "goede",
-	selected: false,
-	hovered: false,
-});
+const props = defineProps<Props>();
 
 const prefixClass = (className: string) => [className, `${props.classPrefix}-${className}`];
 

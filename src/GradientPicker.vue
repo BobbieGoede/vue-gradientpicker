@@ -8,11 +8,11 @@ type ColorData = { position: number; color: ColorSpaceObject };
 type SimplifiedColor = string | ColorSpaceObject | ColorCommonInstance;
 
 type Props = {
-	modelValue: string[] | ColorData[];
+	modelValue?: string[] | ColorData[];
 	selectionColor?: SimplifiedColor;
 	color?: SimplifiedColor;
 	selection?: { index: number; color: SimplifiedColor; element: HTMLDivElement };
-	colorSpace: ColorSpace;
+	colorSpace?: ColorSpace;
 	gradient?: string;
 	/** Used to determine whether this instance of the picker is selected.
 	 * Leave undefined if only one picker is used.
@@ -73,7 +73,7 @@ const isArrayOfColorData = (val: (string | ColorData)[]): val is ColorData[] =>
 
 const gradientHasPositions = (val: ColorData[]) => val.every((x) => x.position != null);
 const setData = (gradient: (string | ColorData)[]) => {
-	let count = gradient.length - 1;
+	const count = gradient.length - 1;
 
 	if (isArrayOfColorData(gradient)) {
 		if (gradientHasPositions(gradient)) {
@@ -88,7 +88,6 @@ const setData = (gradient: (string | ColorData)[]) => {
 			}));
 		}
 	} else {
-		// @ts-ignore
 		data.value = gradient
 			.filter((x): x is string => typeof x === "string")
 			.map((val: string, i) => ({ color: convertColor(val), position: i / count }));
@@ -311,7 +310,7 @@ onBeforeUnmount(() => listeners.abort());
 	</div>
 </template>
 
-<style lang="scss">
+<style>
 .gradient-picker {
 	position: relative;
 	height: 2em;
@@ -328,14 +327,14 @@ onBeforeUnmount(() => listeners.abort());
 	transform: translateY(-50%) translateX(-50%);
 	text-align: center;
 	cursor: pointer;
+}
 
-	&--hover {
-		z-index: 20;
-	}
+.handle-container--hover {
+	z-index: 20;
+}
 
-	&--selected {
-		z-index: 10;
-	}
+.handle-container--selected {
+	z-index: 10;
 }
 
 .handle {
@@ -360,19 +359,24 @@ onBeforeUnmount(() => listeners.abort());
 	width: 0.8em;
 	height: 0.8em;
 	border-radius: 1em;
-	box-shadow: 0em 0em 0em 0.15em white, 0em 0em 0em 0.25em rgba(0, 0, 0, 0.5),
+	box-shadow:
+		0em 0em 0em 0.15em white,
+		0em 0em 0em 0.25em rgba(0, 0, 0, 0.5),
 		0em 0em 0em 0.1em rgba(0, 0, 0, 0.5) inset;
-	transition: transform 0.088s ease, box-shadow 0.088s ease;
+	transition:
+		transform 0.088s ease,
+		box-shadow 0.088s ease;
+}
 
-	&--hover {
-		transform: translateY(-50%) translateX(-50%) scale(1.2, 1.2);
-	}
+.goede-handle--hover {
+	transform: translateY(-50%) translateX(-50%) scale(1.2, 1.2);
+}
 
-	&--selected {
-		box-shadow: 0em 0em 0em 0.15em white, 0em 0em 0em 0.23em rgba(0, 0, 0, 0.5),
-			0em 0em 0em 0.1em rgba(0, 0, 0, 0.5) inset;
-
-		transform: translateY(-50%) translateX(-50%) scale(1.35, 1.35);
-	}
+.goede-handle--selected {
+	box-shadow:
+		0em 0em 0em 0.15em white,
+		0em 0em 0em 0.23em rgba(0, 0, 0, 0.5),
+		0em 0em 0em 0.1em rgba(0, 0, 0, 0.5) inset;
+	transform: translateY(-50%) translateX(-50%) scale(1.35, 1.35);
 }
 </style>

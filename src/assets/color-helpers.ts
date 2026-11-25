@@ -1,4 +1,4 @@
-import { ColorCommonInstance, ColorSpaceObject, color, hsl, lab, lch, rgb } from "d3-color";
+import { type ColorCommonInstance, type ColorSpaceObject, color, hsl, lab, lch, rgb } from "d3-color";
 import { interpolateHcl, interpolateHsl, interpolateLab, interpolateRgb } from "d3-interpolate";
 
 export type ColorSpace = "lab" | "lch" | "hsl" | "srgb";
@@ -23,7 +23,7 @@ export const interpolateColor = (
 };
 
 export const convertColor = (col: string | ColorCommonInstance | ColorSpaceObject, space: ColorSpace) => {
-	const val = typeof col === "string" ? color(col) ?? rgb(0, 0, 0) : col;
+	const val = typeof col === "string" ? (color(col) ?? rgb(0, 0, 0)) : col;
 
 	switch (space) {
 		case "hsl":
@@ -37,4 +37,3 @@ export const convertColor = (col: string | ColorCommonInstance | ColorSpaceObjec
 			return rgb(val);
 	}
 };
-
