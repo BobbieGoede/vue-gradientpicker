@@ -238,8 +238,8 @@ const setValue = (event: MouseEvent | TouchEvent) => {
 watch(
 	() => props.colorSpace,
 	() => {
-		setData(props.modelValue);
-		emit("update:gradient", cssGradient.value);
+		data.value = data.value.map((val) => ({ ...val, color: convertColor(val.color) }));
+		dataChanged();
 	}
 );
 
