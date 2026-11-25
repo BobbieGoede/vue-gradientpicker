@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch, nextTick, watchEffect } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useEventListener } from "@vueuse/core";
-import { hsl, HSLColor, color, ColorCommonInstance, ColorSpaceObject, lch, hcl, Color, rgb, lab } from "d3-color";
+import type { ColorCommonInstance, ColorSpaceObject } from "d3-color";
 import HandleContainer from "./components/HandleContainer.vue";
 import { convertColor as convertColorHelper, interpolateColor, type ColorSpace } from "./assets/color-helpers";
 
@@ -59,15 +59,6 @@ const dragging = ref(false);
 
 const checkerImage = `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAL0lEQVQ4T2N89uzZfwY8QFJSEp80A+OoAcMiDP4DAb6Ifv78Of50MGoAA+PQDwMAuX5VedFT3cEAAAAASUVORK5CYII=")`;
 
-const pickerBackground = computed(() => `${cssGradient.value}, ${checkerImage}`);
-const cssGradient = computed(
-	() =>
-		`linear-gradient(in ${props.colorSpace} to ${props.colorSpace === "hsl" ? "right" : "right"}, ${
-			colorGradient.value
-		})`
-);
-// const colorGradient = ref("");
-const pickerStyle = computed(() => `background-image: ${pickerBackground.value};`);
 const colorGradient = computed(() => {
 	const copy = [...data.value].sort((a, b) => (a.position > b.position ? 1 : -1)).filter((val) => val.position >= 0);
 
@@ -75,13 +66,8 @@ const colorGradient = computed(() => {
 
 	return copy.map((x) => `${x.color.toString()} ${(x.position * 100).toFixed(2)}%`).join(", ");
 });
-// watchEffect(() => {
-// 	const copy = [...data.value].sort((a, b) => (a.position > b.position ? 1 : -1)).filter((val) => val.position >= 0);
-
-// 	if (copy.length === 1) copy.push(copy[0]);
-
-// 	colorGradient.value = copy.map((x) => `${x.color.toString()} ${(x.position * 100).toFixed(2)}%`).join(", ");
-// });
+const cssGradient = computed(() => `linear-gradient(in ${props.colorSpace} to right, ${colorGradient.value})`);
+const pickerStyle = computed(() => ({ backgroundImage: `${cssGradient.value}, ${checkerImage}` }));
 
 const isArrayOfColorData = (val: (string | ColorData)[]): val is ColorData[] =>
 	val.filter((x) => typeof x !== "string").length > 0;
@@ -110,15 +96,10 @@ const setData = (gradient: (string | ColorData)[]) => {
 	}
 };
 
-const dataChanged = async () => {
+const dataChanged = () => {
 	emit("gradient", { gradient: colorGradient.value, colors: data.value });
-
-	// console.log(el.value);
-	// console.log(pickerStyle.value);
-	// el.value.style = pickerStyle.value;
 	emit("update:model-value", data.value);
 	emit("update:gradient", cssGradient.value);
-	await nextTick();
 };
 
 const stopDrag = () => {
@@ -135,9 +116,9 @@ const getEventPosition = (event: MouseEvent | TouchEvent) => {
 	return event.touches[0];
 };
 
-const remove = async (index: number) => {
+const remove = (index: number) => {
 	data.value.splice(index, 1);
-	await dataChanged();
+	dataChanged();
 
 	selectedIndex.value = selectedIndex.value < data.value.length ? Math.max(selectedIndex.value, 0) : 0;
 	emit("update:selection", {
@@ -168,7 +149,7 @@ const onHandleSelect = (index: number) => {
 	emit("update:select", el.value);
 };
 
-const addAtClick = async (event: MouseEvent | TouchEvent) => {
+const addAtClick = (event: MouseEvent | TouchEvent) => {
 	if (el.value == null) return;
 	const rect = el.value.getBoundingClientRect();
 	const pos = getEventPosition(event);
@@ -191,7 +172,7 @@ const addAtClick = async (event: MouseEvent | TouchEvent) => {
 		),
 		position: relativeX,
 	});
-	await dataChanged();
+	dataChanged();
 
 	selectedIndex.value = data.value.length - 1;
 	dragging.value = true;
@@ -256,30 +237,15 @@ const setValue = (event: MouseEvent | TouchEvent) => {
 
 watch(
 	() => props.colorSpace,
-	async (val) => {
-		// await nextTick();
-		// console.log([...props.modelValue]);
-		// setCssGradient();
+	() => {
 		setData(props.modelValue);
 		emit("update:gradient", cssGradient.value);
-		// await dataChanged();
-		console.log("after", cssGradient.value, el.value.style.backgroundImage);
-	},
-	{
-		flush: "post",
-		// onTrack(e) {
-		// 	console.log(colorGradient.value);
-		// },
-		// onTrigger(e) {
-		// 	console.log(colorGradient.value);
-		// },
 	}
 );
 
 watch(
 	() => props.color,
-	async (val) => {
-		console.log("color change");
+	(val) => {
 		if (val == null) return;
 		if (selectedIndex.value < 0) return;
 		if (data.value[selectedIndex.value].color === convertColor(val)) return;
@@ -289,25 +255,13 @@ watch(
 			position: data.value[selectedIndex.value].position,
 		};
 
-		await dataChanged();
-	},
-	{ flush: "post" }
+		dataChanged();
+	}
 );
-
-// watch(
-// 	cssGradient,
-// 	(val) => {
-// 		console.log("gradient change:", val);
-// 	},
-// 	{
-// 		flush: "post",
-// 	}
-// );
 
 watch(
 	() => props.focus,
 	(val) => {
-		console.log("focus change");
 		if (val !== el.value) {
 			selectedIndex.value = -1;
 		} else if (selectedIndex.value === -1) {
@@ -315,21 +269,10 @@ watch(
 			emit("update:select", el.value);
 			selectedIndex.value = 0;
 		}
-	},
-	{ flush: "post" }
-);
-
-watch(pickerStyle, (val) => {
-	console.log(val);
-});
-
-watch(
-	() => props.modelValue,
-	async (val, oldVal) => {
-		setData(val);
-		// console.log([...oldVal], [...val]);
 	}
 );
+
+watch(() => props.modelValue, setData);
 
 setData(props.modelValue);
 
@@ -348,7 +291,6 @@ onMounted(() => {
 		ref="el"
 		:class="['gradient-picker', `${classPrefix}-gradient-picker`]"
 		:style="pickerStyle"
-		:data-style="pickerStyle"
 		@mousedown.prevent="addAtClick"
 		@touchstart.prevent="addAtClick"
 	>
