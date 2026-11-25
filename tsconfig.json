@@ -36,7 +36,6 @@
 		"src/**/*.d.ts",
 		"src/**/*.tsx",
 		"src/**/*.vue",
-		"cypress.d.ts",
 	],
 	"exclude": [
 		"node_modules"
