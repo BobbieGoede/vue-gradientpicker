@@ -2,150 +2,104 @@
 
 ![@goede/vue-gradientpicker cover image](https://goede.site/gradientpicker/gradient-picker-cover.png)
 [![npm version](https://img.shields.io/npm/v/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
-[![npm version](https://img.shields.io/npm/dt/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
-[![npm version](https://img.shields.io/snyk/vulnerabilities/npm/@goede/vue-gradientpicker?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
+[![npm downloads](https://img.shields.io/npm/dt/@goede/vue-gradientpicker.svg?style=flat)](https://www.npmjs.com/package/@goede/vue-gradientpicker "View this project on npm")
 
 ### [Live demo](https://goede.site/gradientpicker/index.html "Live demo")
 
-A simple & intuitive gradient picker made with Vue.js. Tap on the gradient to add a new node, drag a node to change its position or to remove it from the gradient.
+A simple & intuitive gradient picker made with Vue. Click on the gradient to add a stop, drag a stop to change its position, or drag it away from the gradient to remove it.
 
-### Install & import
+The gradient is rendered by the browser in the color space of your choice (`srgb`, `hsl`, `lab`, `lch`, `oklab` or `oklch`), and new stops get the exact color the browser renders at that position.
 
-Start by installing @goede/vue-gradientpicker using npm:
+## Install
 
 ```bash
-$ npm install @goede/vue-gradientpicker
+npm install @goede/vue-gradientpicker
 ```
 
-Import the gradient picker from @goede/vue-gradientpicker at the top of the vue script. Then register the component in the components object.
+## Usage
 
-```html
-<template>
-	<GradientPicker
-		@selection-change="setPickerFocus"
-		@gradient-change="onGradientChange"
-		:selection-color="nodeColor"
-		:current-focus="currentFocus"
-	/>
-</template>
+```vue
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import GradientPicker, { toLinearGradient, type GradientStop } from "@goede/vue-gradientpicker";
+import "@goede/vue-gradientpicker/style.css";
 
-<script>
-	// Import component
-	import GradientPicker from "@goede/vue-gradientpicker";
-
-	export default {
-		// Register component
-		components: {
-			GradientPicker,
-		},
-		data: function() {
-			return {
-				currentFocus: null,
-				nodeColor: "",
-			};
-		},
-		methods: {
-			setPickerFocus: function(e) {
-				this.currentFocus = e.element;
-				this.nodeColor = e.color;
-			},
-			onGradientChange: function(e) {
-				document.documentElement.style.background = `linear-gradient(to right, ${colors.gradient})`;
-			},
-		},
-	};
+const stops = ref<GradientStop[]>([
+	{ color: "dodgerblue", position: 0 },
+	{ color: "blueviolet", position: 1 },
+]);
+const selected = ref<number>();
+const gradient = computed(() => toLinearGradient(stops.value, "oklch"));
 </script>
+
+<template>
+	<GradientPicker v-model="stops" v-model:selected="selected" color-space="oklch" />
+
+	<!-- edit the selected stop with any color input -->
+	<input v-if="selected !== undefined" v-model="stops[selected].color" />
+
+	<div :style="{ backgroundImage: gradient }" />
+</template>
 ```
 
-### Properties
+Stop colors can be any CSS color string. Stops added by the picker use the notation of the color space, for example `oklch(0.64 0.22 321.22)` or `color(srgb 0.5 0 0.5)`.
 
-<table>
-<tr>
-	<th>Name</th>
-	<th>Type</th>
-	<th>Default</th>
-	<th>Description</th>
-</tr>
-<tr>
-	<td>selectionColor</td>
-	<td><pre class="javascript">Object</pre></td>
-	<td><pre class="javascript">{
-  h: 0, 
-  s: 0, 
-  l: 0, 
-  opacity: 0
-}</pre></td>
-	<td>Use this prop to set the color of the current selected node.</td>
-</tr>
-<tr>
-	<td>gradient</td>
-	<td><pre class="javascript">[Object] or [String]</pre></td>
-		<td><pre class="javascript">[
-  "dodgerblue", 
-  "blueviolet"
-]</pre></td>
-	<td>Used to initialize the gradient. An array of color strings or an array of objects with a color string and a position value (0...1) properties.
+### Multiple pickers
 
-For example;
+Each picker has its own selection, clear the other selections to keep a single stop selected across pickers:
 
-<pre>[{ 
-  color: "dodgerblue", 
-  position: 0.3 
-},
-{ 
-  color: "blueviolet", 
-  position: 0.8 
-}]</pre></td>
-</tr>
-<tr>
-	<td>currentFocus</td>
-	<td><pre class="javascript">HTMLDivElement</pre></td>
-	<td><pre class="javascript">undefined</pre></td>
-	<td>Used to determine whether this instance of the picker is selected. Leave undefined if a single picker is used.</td>
-</tr>
-<tr>
-	<td>classPrefix</td>
-	<td><pre class="javascript">String</pre></td>
-	<td><pre class="javascript">"Goede"</pre></td>
-	<td>Set a custom class to override default styling. Does not remove required classes for the gradient picker to function.</td>
-</tr>
-<tr>
-<td>removeOffset</td>
-	<td><pre class="javascript">Number</pre></td>
-	<td><pre class="javascript">5</pre></td>
-	<td>Determines the vertical drag distance required to remove a selected node.
-(distance to remove = pickerHeight * removeOffset)</td>
-</tr>
-</table>
+```vue
+<GradientPicker v-model="background" v-model:selected="backgroundStop" @update:selected="borderStop = undefined" />
+<GradientPicker v-model="border" v-model:selected="borderStop" @update:selected="backgroundStop = undefined" />
+```
 
-### Events
+## API
 
-<table>
-<tr>
-	<th>Name</th>
-	<th>Object</th>
-	<th>Description</th>
-</tr>
-<tr>
-	<td>selection-change</td>
-	<td><pre class="javascript">{
-  color: ColorObject,
-  element: HTMLDivElement,
-  index: 0
-}</pre></td>
-	<td>Emitted when a new node is selected.</td>
-</tr>
-<tr>
-	<td>gradient-change</td>
-	<td><pre class="javascript">{
-  gradient: String,
-  colors: [NodeObject]
-}</pre></td>
-	<td>Emitted on every gradient change.
+### Models
 
-Gradient property is a string containing each color with their position percentage, intended for css gradients.
+| Model              | Type                                    | Default                                                                        |
+| ------------------ | --------------------------------------- | ------------------------------------------------------------------------------ |
+| `v-model`          | `{ color: string; position: number }[]` | `[{ color: "dodgerblue", position: 0 }, { color: "blueviolet", position: 1 }]` |
+| `v-model:selected` | `number \| undefined`                   | `undefined`                                                                    |
 
-Colors property is an array with NodeObjects, containing each color as an hsl object and their position (0...1)</td>
+Positions range from `0` to `1`. Stops keep their order in the array when dragged past each other.
 
-</tr>
-</table>
+### Props
+
+| Prop           | Type                                                      | Default   | Description                                                                                                     |
+| -------------- | --------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
+| `colorSpace`   | `"srgb" \| "hsl" \| "lab" \| "lch" \| "oklab" \| "oklch"` | `"oklch"` | Color space used to interpolate the gradient.                                                                   |
+| `classPrefix`  | `string`                                                  | `"goede"` | Adds `<classPrefix>-*` classes for theming, see [Styling](#styling).                                            |
+| `removeOffset` | `number`                                                  | `1`       | Vertical distance (relative to the picker height) a stop has to be dragged away from the gradient to remove it. |
+
+### `toLinearGradient(stops, colorSpace = "oklch", direction = "to right")`
+
+Returns a CSS `linear-gradient()` for the given stops, which you can use anywhere a CSS image is accepted.
+
+```ts
+toLinearGradient(stops.value, "oklab", "45deg");
+// linear-gradient(in oklab 45deg, dodgerblue 0%, blueviolet 100%)
+```
+
+## Styling
+
+The picker renders the following classes, each also added with the `classPrefix` (`goede-gradient-picker`, `goede-handle`, etc.):
+
+- `gradient-picker`
+- `handle-container`, `handle-container--selected`
+- `handle`
+
+The unprefixed classes contain the styles required for the picker to work, the default theme uses the `goede-` prefixed classes. Set `classPrefix` to your own prefix to replace the default theme.
+
+## Browser support
+
+The picker uses CSS color interpolation in gradients and `color-mix()`, which are supported in Chrome/Edge 111+, Safari 16.2+ and Firefox 127+.
+
+## Migrating from 1.x
+
+Version 2 requires Vue 3, use `@goede/vue-gradientpicker@1` for Vue 2.
+
+- `gradient` is replaced by `v-model`, stops are always objects with a `color` and `position`
+- `currentFocus`, `selectionColor` and `@selection-change` are replaced by `v-model:selected`, change the color of a stop by updating it in `v-model`
+- `@gradient-change` is replaced by `v-model` together with `toLinearGradient()`
+- The stylesheet is no longer injected, import `@goede/vue-gradientpicker/style.css`
