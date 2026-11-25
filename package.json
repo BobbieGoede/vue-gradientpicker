@@ -1,12 +1,12 @@
 {
 	"name": "@goede/vue-gradientpicker",
 	"version": "1.0.3",
-	"description": "## Project setup ``` npm install ```",
+	"description": "A simple & intuitive gradient picker made with Vue",
 	"author": "Bobbie Goede <bobbiegoede@gmail.com>",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/bobbiegoede/vue-gradientpicker"
+		"url": "git+https://github.com/bobbiegoede/vue-gradientpicker.git"
 	},
 	"keywords": [
 		"gradient",
@@ -16,37 +16,35 @@
 		"vuejs"
 	],
 	"type": "module",
+	"sideEffects": [
+		"*.css"
+	],
 	"exports": {
-		".": {
-			"require": "./dist/vue-gradientpicker.cjs.js",
-			"import": "./dist/vue-gradientpicker.es.js"
-		},
-		"./GradientPicker": {
-			"require": "./dist/vue-gradientpicker.cjs.js",
-			"import": "./dist/vue-gradientpicker.es.js"
-		},
-		"./dist/style.css": {
-			"import": "./dist/style.css"
-		}
+		".": "./dist/index.js",
+		"./style.css": "./dist/style.css",
+		"./package.json": "./package.json"
 	},
-	"main": "./dist/vue-gradientpicker.cjs.js",
-	"module": "./dist/vue-gradientpicker.es.js",
+	"types": "./dist/index.d.ts",
 	"files": [
-		"dist/*"
+		"dist"
 	],
 	"packageManager": "pnpm@12.21.0",
 	"scripts": {
 		"dev": "vite",
-		"build": "vite build",
+		"build": "tsdown",
 		"lint": "eslint .",
-		"typecheck": "vue-tsc --noEmit"
+		"typecheck": "vue-tsc --noEmit",
+		"prepack": "tsdown"
+	},
+	"peerDependencies": {
+		"vue": "^3.5.0"
 	},
 	"dependencies": {
 		"d3-color": "^3.1.1",
-		"d3-interpolate": "^3.0.2",
-		"vue": "^3.5.0"
+		"d3-interpolate": "^3.0.2"
 	},
 	"devDependencies": {
+		"@tsdown/css": "^0.23.7",
 		"@types/d3-color": "^3.1.3",
 		"@types/d3-interpolate": "^3.0.4",
 		"@vitejs/plugin-vue": "^6.0.11",
@@ -56,8 +54,11 @@
 		"eslint": "^10.15.0",
 		"eslint-plugin-vue": "^10.12.1",
 		"prettier": "^3.10.1",
+		"tsdown": "^0.23.7",
 		"typescript": "~6.0.3",
+		"unplugin-vue": "^8.0.1",
 		"vite": "^8.3.8",
+		"vue": "^3.5.0",
 		"vue-tsc": "^3.3.14"
 	}
 }
