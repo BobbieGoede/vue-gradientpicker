@@ -48,6 +48,41 @@ test("selects a stop on click", async () => {
 
 	expect(state.selected).toBe(1);
 	expect(handles()[1].classList).toContain("handle-container--selected");
+	await expect.element(handles()[1]).toHaveFocus();
+});
+
+test("moves the focused stop with the keyboard", async () => {
+	const { state, handles } = await renderPicker();
+
+	handles()[0].focus();
+	expect(state.selected).toBe(0);
+
+	await userEvent.keyboard("{ArrowRight}");
+	expect(state.modelValue![0].position).toBeCloseTo(0.01);
+
+	await userEvent.keyboard("{Shift>}{ArrowRight}{/Shift}");
+	expect(state.modelValue![0].position).toBeCloseTo(0.11);
+
+	await userEvent.keyboard("{End}{ArrowRight}");
+	expect(state.modelValue![0].position).toBe(1);
+	expect(handles()[0].getAttribute("aria-valuenow")).toBe("100");
+
+	await userEvent.keyboard("{Home}");
+	expect(state.modelValue![0].position).toBe(0);
+});
+
+test("removes the focused stop with Delete", async () => {
+	const { state, handles } = await renderPicker();
+
+	handles()[1].focus();
+	await userEvent.keyboard("{Delete}");
+
+	expect(state.modelValue).toEqual([RED_TO_BLUE[0]]);
+	expect(state.selected).toBe(0);
+	await expect.element(handles()[0]).toHaveFocus();
+
+	await userEvent.keyboard("{Backspace}");
+	expect(state.modelValue).toHaveLength(1);
 });
 
 test("adds a stop with the color at the clicked position", async () => {

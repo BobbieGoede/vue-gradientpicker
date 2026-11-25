@@ -53,6 +53,19 @@ Each picker has its own selection, clear the other selections to keep a single s
 <GradientPicker v-model="border" v-model:selected="borderStop" @update:selected="backgroundStop = undefined" />
 ```
 
+### Keyboard
+
+Each stop is a focusable slider labelled with its color, focusing a stop selects it.
+
+| Key                     | Action                                         |
+| ----------------------- | ---------------------------------------------- |
+| `←` `↓` / `→` `↑`       | Move the stop by 1% (10% when holding `Shift`) |
+| `Page Down` / `Page Up` | Move the stop by 10%                           |
+| `Home` / `End`          | Move the stop to the start or end              |
+| `Delete` / `Backspace`  | Remove the stop                                |
+
+Stops can't be added with the keyboard, add them by updating `v-model` instead (for example from an "Add stop" button).
+
 ## API
 
 ### Models

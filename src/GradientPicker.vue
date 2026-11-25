@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { getColorAt, toLinearGradient, type ColorSpace, type GradientStop } from "./colors";
 
 const {
@@ -33,18 +33,49 @@ const background = computed(() => {
 });
 
 const prefixed = (name: string) => [name, `${classPrefix}-${name}`];
+const clamp = (position: number) => Math.min(Math.max(position, 0), 1);
+const toPercent = (position: number) => Math.round(position * 100);
+
+const KEY_STEPS: Record<string, number> = {
+	ArrowLeft: -0.01,
+	ArrowDown: -0.01,
+	ArrowRight: 0.01,
+	ArrowUp: 0.01,
+	PageDown: -0.1,
+	PageUp: 0.1,
+};
 
 function getPointer(event: PointerEvent) {
 	const rect = el.value!.getBoundingClientRect();
-	const position = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+	const position = clamp((event.clientX - rect.left) / rect.width);
 	const offset = Math.max(rect.top - event.clientY, event.clientY - rect.bottom, 0) / rect.height;
 	return { position, removed: offset > removeOffset };
+}
+
+async function focusHandle(index: number) {
+	await nextTick();
+	el.value?.querySelectorAll<HTMLElement>(".handle-container")[index]?.focus();
+}
+
+function moveStop(index: number, position: number) {
+	if (stops.value[index].position === position) return;
+	stops.value = stops.value.map((stop, i) => (i === index ? { ...stop, position } : stop));
+}
+
+function removeStop(index: number) {
+	if (stops.value.length < 2) return;
+	const remaining = stops.value.filter((_, i) => i !== index);
+	const next = Math.min(index, remaining.length - 1);
+	stops.value = remaining;
+	selected.value = next;
+	focusHandle(next);
 }
 
 function startDrag(index: number, event: PointerEvent) {
 	selected.value = index;
 	dragging = index;
 	el.value!.setPointerCapture(event.pointerId);
+	focusHandle(index);
 }
 
 function onHandleDown(index: number, event: PointerEvent) {
@@ -63,24 +94,29 @@ function onPickerDown(event: PointerEvent) {
 
 function onPointerMove(event: PointerEvent) {
 	if (dragging === undefined) return;
-	const index = dragging;
 	const { position, removed } = getPointer(event);
 
-	removing.value = removed && stops.value.length > 1 ? index : undefined;
-	if (removing.value !== undefined || stops.value[index].position === position) return;
-
-	stops.value = stops.value.map((stop, i) => (i === index ? { ...stop, position } : stop));
+	removing.value = removed && stops.value.length > 1 ? dragging : undefined;
+	if (removing.value === undefined) moveStop(dragging, position);
 }
 
 function onPointerUp() {
 	const index = removing.value;
 	dragging = undefined;
 	removing.value = undefined;
-	if (index === undefined) return;
+	if (index !== undefined) removeStop(index);
+}
 
-	const remaining = stops.value.filter((_, i) => i !== index);
-	stops.value = remaining;
-	selected.value = Math.min(index, remaining.length - 1);
+function onHandleKeydown(index: number, event: KeyboardEvent) {
+	const step = KEY_STEPS[event.key];
+
+	if (step !== undefined) moveStop(index, clamp(stops.value[index].position + step * (event.shiftKey ? 10 : 1)));
+	else if (event.key === "Home") moveStop(index, 0);
+	else if (event.key === "End") moveStop(index, 1);
+	else if (event.key === "Delete" || event.key === "Backspace") removeStop(index);
+	else return;
+
+	event.preventDefault();
 }
 </script>
 
@@ -100,7 +136,16 @@ function onPointerUp() {
 			:key="i"
 			:class="[prefixed('handle-container'), i === selected && prefixed('handle-container--selected')]"
 			:style="{ left: `${stop.position * 100}%` }"
+			role="slider"
+			tabindex="0"
+			aria-valuemin="0"
+			aria-valuemax="100"
+			:aria-valuenow="toPercent(stop.position)"
+			:aria-valuetext="`${toPercent(stop.position)}%`"
+			:aria-label="stop.color"
 			@pointerdown.prevent.stop="onHandleDown(i, $event)"
+			@focus="selected = i"
+			@keydown="onHandleKeydown(i, $event)"
 		>
 			<div :class="prefixed('handle')" :style="{ backgroundColor: stop.color }" />
 		</div>
@@ -165,6 +210,15 @@ function onPointerUp() {
 	transition:
 		transform 0.088s ease,
 		box-shadow 0.088s ease;
+}
+
+.goede-handle-container:focus-visible {
+	outline: none;
+}
+
+.goede-handle-container:focus-visible > .goede-handle {
+	outline: auto;
+	outline-offset: 0.3em;
 }
 
 /* :where keeps hover below the selected state */
